@@ -7,7 +7,7 @@ https://www.section.io/engineering-education/how-to-use-cors-in-nodejs-with-expr
 app.use(cors({
     // origin: 'https://www.section.io'
     // origin: '*'
-    origin: ['http://localhost:3456', "https://vite-production-bb5a.up.railway.app/"]
+    origin: ['http://localhost:3456', "https://vite-production-bb5a.up.railway.app"]
 }));
 
 app.get('/', (req, res) =>{
