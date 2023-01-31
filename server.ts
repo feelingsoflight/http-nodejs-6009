@@ -1,13 +1,15 @@
 import https from 'https'
 import express from 'express';
 import cors from 'cors';
+import bodyParser from 'body-parser';
 const app = express();
 
 https://www.section.io/engineering-education/how-to-use-cors-in-nodejs-with-express/
 app.use(cors({
     // origin: 'https://www.section.io'
     // origin: '*'
-    origin: ['http://localhost:3456', "https://vite-production-bb5a.up.railway.app"]
+    origin: ['http://localhost:3456', "https://vite-production-bb5a.up.railway.app"],
+    maxAge: 600, // Access-Control-Max-Age is 600 ~ https://stackoverflow.com/questions/29954037/why-is-an-options-request-sent-and-can-i-disable-it
 }));
 
 app.get('/', (req, res) =>{
@@ -47,6 +49,29 @@ app.get('/najft', (req, res) => {
     })
 })
 
+// app.use(express.json())
+// // app.use(express.urlencoded({extended: false}))
+
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.text())
+
+let banner: string = "default banner"
+app.get('/messages/banner', (req, res) =>{
+    res.send(banner);
+});
+app.post('/messages/banner', (req, res) =>{
+    // let data = ''
+    // req.on('data', chunk => data += chunk).on('end', () => {
+    //     console.log('setting message banner', data)
+    //     banner = data
+    //     res.status(200)
+    //     res.end()
+    // })
+    console.log('req.body', req.body)
+    banner = req.body
+    res.end()
+});
 
 const desiredPort = process.env.PORT;
 
