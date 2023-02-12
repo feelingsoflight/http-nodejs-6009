@@ -73,6 +73,33 @@ app.post('/messages/banner', (req, res) =>{
     res.end()
 });
 
+let volatile: any = {serverValue: 'initial'}
+app.get('/volatile', (req, res) =>{
+    res.send({
+        ...volatile, 
+        server: {
+            retreived: new Date()
+        }
+    });
+});
+app.post('/volatile/:path', (req, res) =>{
+    // let data = ''
+    // req.on('data', chunk => data += chunk).on('end', () => {
+    //     console.log('setting message banner', data)
+    //     banner = data
+    //     res.status(200)
+    //     res.end()
+    // })
+    console.log('req.params.path', req.params.path)
+    console.log('req.body', req.body)
+    volatile[req.params.path] = req.body
+    res.end()
+});
+
+
+
+
+
 const desiredPort = process.env.PORT;
 
 const port = desiredPort || 6543
