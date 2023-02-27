@@ -91,8 +91,17 @@ app.post('/volatile/:path', (req, res) =>{
     //     res.end()
     // })
     console.log('req.params.path', req.params.path)
-    console.log('req.body', req.body)
-    volatile[req.params.path] = req.body
+    console.log('req.body=')
+    console.log(' ', req.body)
+    if ((req.body) && (typeof req.body === 'object') && (Object.entries(req.body).length === 0)) {
+        // client sent us undefined
+        delete volatile[req.params.path]
+    } else {
+        // everything else come as {value: ___ } because
+        // otherwise we crash on null and numbers and other things
+        volatile[req.params.path] = req.body
+    }
+
     res.end()
 });
 
