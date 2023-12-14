@@ -122,22 +122,35 @@ const jwtOptions: JWTOptions = {
 app.get('/sheets/auth', async (req, res) =>{
     res.send(jwtOptions)    
 });
+const sheetApi = {
+    getSheet: async function (spreadSheetId: string, sheetNameOrIndex: string) {
+        
+        const serviceAccountAuth = new JWT(jwtOptions);
+        const doc = new GoogleSpreadsheet(spreadSheetId, serviceAccountAuth);
+        await doc.loadInfo()
 
-app.get('/sheet/:sheetId', async (req, res) =>{
+        const sheetIndex = parseInt(sheetNameOrIndex)
+        
+        const sheet =
+          !isNaN(sheetIndex) 
+            ? doc.sheetsByIndex[sheetIndex]
+            : doc.sheetsByTitle[sheetNameOrIndex]
+        
+        return {doc, sheet}
+    }
+
+}
+
+app.get('/sheet/:spreadSheetId/:sheetNameOrIndex', async (req, res) =>{
     console.log('sheets!')
     
     try {
-        
-        const serviceAccountAuth = new JWT(jwtOptions);
-        const doc = new GoogleSpreadsheet(req.params.sheetId, serviceAccountAuth);
-        await doc.loadInfo()
-
-        const sheet = doc.sheetsByIndex[0]
+        const {doc, sheet} = await sheetApi.getSheet(req.params.spreadSheetId, req.params.sheetNameOrIndex)
         
         const minCount = 1000 // even on a blank sheet, google says there are a 1000 records
         const rows = await sheet.getRows({offset: Math.max(0, sheet.rowCount - minCount), limit: minCount})
 
-        const limit = 20
+        const limit = 200 //idk weight doesnt need lots but for roughnecks links we already past 20, so, whatevers good luck future me
         rows.splice(0, Math.max(0, rows.length - limit))
         
         const data = {
@@ -158,6 +171,7 @@ app.get('/sheet/:sheetId', async (req, res) =>{
         res.send(data);
 
     } catch (e) {
+        console.error(e)
         res.status(500)
         res.send(e)
     }
@@ -165,20 +179,18 @@ app.get('/sheet/:sheetId', async (req, res) =>{
     
 });
 
-app.post('/sheet/:sheetId', async (req, res) =>{
+app.post('/sheet/:spreadSheetId/:sheetNameOrIndex', async (req, res) =>{
     console.log('sheets! incoming')
     
     try {
         console.log('req.body', req.body)
         
-        const serviceAccountAuth = new JWT(jwtOptions);
-        const doc = new GoogleSpreadsheet(req.params.sheetId, serviceAccountAuth);
-        await doc.loadInfo()
-        
-        const sheet = doc.sheetsByIndex[0]
+        const {doc, sheet} = await sheetApi.getSheet(req.params.spreadSheetId, req.params.sheetNameOrIndex)
+
         await sheet.addRow(req.body)
         
     } catch (e) {
+        console.error(e)
         res.status(500)
         res.send(e)
     }
