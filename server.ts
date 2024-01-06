@@ -197,6 +197,44 @@ app.post('/sheet/:spreadSheetId/:sheetNameOrIndex', async (req, res) =>{
     res.end()    
 });
 
+app.post('/sheet/:spreadSheetId/:sheetNameOrIndex/pk', async (req, res) =>{
+    console.log('sheets! incoming')
+    
+    try {
+        console.log('req.body', req.body)
+        
+        const {doc, sheet} = await sheetApi.getSheet(req.params.spreadSheetId, req.params.sheetNameOrIndex)
+
+        const minCount = 1000 // even on a blank sheet, google says there are a 1000 records
+        const rows = await sheet.getRows({offset: Math.max(0, sheet.rowCount - minCount), limit: minCount})
+        const firstColumn = sheet.headerValues[0]
+        if (!firstColumn) {
+            throw "no primary key column defined"
+        }
+        const updateValues = req.body
+        const pk = updateValues[firstColumn]
+        const existing = rows.find(row => row.get(firstColumn) == pk)
+        if (!existing) {
+            await sheet.addRow(req.body)
+        } else {
+            console.log('found', existing)
+            console.log('assigning', updateValues)
+            Object.entries(updateValues).forEach(([key,value]) => {
+                if (value === undefined) return
+                existing.set(key, value??'')
+            })
+            // existing.assign(updateValues)
+            await existing.save()
+        }
+        
+    } catch (e) {
+        console.error(e)
+        res.status(500)
+        res.send(e)
+    }
+    res.end()    
+});
+
 
 
 
